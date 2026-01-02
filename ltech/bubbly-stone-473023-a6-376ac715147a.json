@@ -1,0 +1,13 @@
+{
+  "type": "service_account",
+  "project_id": "bubbly-stone-473023-a6",
+  "private_key_id": "376ac715147ada2f8fe9a31200e96642fdd481de",
+  "private_key": "-----BEGIN PRIVATE KEY-----\nMIIEvgIBADANBgkqhkiG9w0BAQEFAASCBKgwggSkAgEAAoIBAQCk1q/PFwWB30lO\nYv6lmhSgrICMKIY8AqbfohtTwSs/wklLaJR7SgC5OO1j0gXJ7GVV0GX5+zqXu1bI\nkbvGn0LLHSYNR6KyQOLUqcMnuQdo8h3Pip+pWQfIJIsF06gl9e/4DC59K92mlovo\nbJ4mWw+r0wwA9OMEWxd2nTe/GSHaMT9CgwaHBeSmqP8ZFuZNj4MNVe8sLWSHqUJr\nswKUP1b4SrXa8LYID96a4a+dJiX0wdCbaZF4i/FNwOJhlJjQYVK2hmNUHcz/rKbo\nlTxkkCokft5J8y3MPazuludDUVW7QMhlzj30TD2cUk8NowVfRkYTK7QFcn5mo6q3\nA4ehiTxXAgMBAAECggEANGpeAjyAUFFXppjc/3y01Xi08ZyLPrbbKF6MUQAqR/54\nPwXUvTWFcGB1QBoPJCvK91QqsShdc9Uq3eFVc+29mAe/S1a9me//EP+gYle4Tvs6\nVn3ukjOQwWg5WtN4cwW21knNWJkjxK63c2NikLDBFXKpLP6x13c9yUZp7RbJSG+A\nv4hjeA1lA9ndgkV5JMcvYSXR2HRgVLXSFHCFlj/07AudbjL1JWiahjmsReJXMRUo\nxF5+nW/a6u6xCW+CJLl0q6hDqP00z27vdVJSGlZ16OGNXsTU038QG5fSN1ViGd6M\ncd3E6HprEjiPC2+O4VCNGa8KZT81/w9FcEATwJiq9QKBgQDVlzoYHXoPoQHdNnaw\nUYspfbDIlHD6WIGPBZ60ie7khSTUMPyELlAwGUHBdxN5Y4yZo8y4VJu2UbhtoqIN\n0ST6tcBXgEa+eXMJXs2cJ9Ico8PPlZ8ZzvbZeb0ZdBviDTx0H+8s7anhpRJ6K0MC\nbbUq4xzu1pQ5CvNRKyPv5n5M7QKBgQDFkWZp64XJke3ygkkyFMDv/cjGho9Kckyv\neH+bwpdpZv+Pi5HkGS0Oayqe6fOuAWP4iaoXSBwt9BJIrikJEY5/KggNZZPHGe90\nvRm2AmWjnqZUpDidfxr2oXyl1x/2EBl9xUODK0+yeHkdz3r9fz/XDLOZ0mcMVkMU\nlOodPbmJ0wKBgQCEXvy6BUqodPhayG42R9MfG658IMMD4+YnZSw+Z12OcpWoi9Nz\nd+Bqbry50bpX+MIiVcmCU61NCMhr6ebU+VEZr5pMoEs3sL0CiaaTqHonFbc851V7\nATErBq+THspJBjr5HPF1vrUSCuOwoy8cSjGFKsu7mXCzCX5SR5I2E3si4QKBgGKk\n0G++StRz6kyVRJqexh6NpjuJX+4Z17QdBAnvRM45wQwY8cTj1R1H4MXrpeGRjCrC\nAY0SUg+Xt7FWU+LVQ0K258JYn0pf5rFw4W+BDuJ9Citku2fX2MyfoK7lFG41Z6Tm\nY2kQrQA9Kqv5tjzv1h43l00MQqtkPqX+HE5xTTxFAoGBAJ+I/YDlGgENsbY9QpVh\nxRPgTdWP5ZRMqzBtbpzguZye3AkMB58PQU28DBIjge3Mn/7GImlbJ37+cL3C5i4t\nA66JkQGL1xO+Z+2KH+21J6VUmqenyH31SQ6/NHPjhH6ND3BSjFZ67YmBhMVc2Hw6\nQS5NXmgIjKrqtqqlN+5gIzWY\n-----END PRIVATE KEY-----\n",
+  "client_email": "xdrive@bubbly-stone-473023-a6.iam.gserviceaccount.com",
+  "client_id": "106635001322250845886",
+  "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+  "token_uri": "https://oauth2.googleapis.com/token",
+  "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+  "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/xdrive%40bubbly-stone-473023-a6.iam.gserviceaccount.com",
+  "universe_domain": "googleapis.com"
+}

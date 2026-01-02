@@ -1,0 +1,6 @@
+{
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.25.1",
+    "googleapis": "^169.0.0"
+  }
+}
