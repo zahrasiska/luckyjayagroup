@@ -1,0 +1,18 @@
+{
+    "mcpServers": {
+        "ltech-db": {
+            "command": "node",
+            "args": [
+                "/home/luckyjayagroup/ltech/ltech-backend/ai/copilot-orchestrator/mcp-pgsql-server.mjs"
+            ],
+            "env": {
+                "PGHOST": "localhost",
+                "PGDATABASE": "postgres",
+                "PGUSER": "postgres",
+                "PGPASSWORD": "",
+                "PGPORT": "5432",
+                "PGSCHEMA": "u1566482_sparepart"
+            }
+        }
+    }
+}

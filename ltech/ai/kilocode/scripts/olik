@@ -1,0 +1,249 @@
+#!/bin/bash
+# olik - Wrapper untuk Kilocode CLI dengan output bersih
+# Usage: olik [kilo-options] [--output-json] <prompt>
+# Example: olik -c golongkan menurut karakteristik table
+# Example: olik --output-json tampilkan daftar table
+
+# Pisahkan options dan prompt
+KILO_OPTIONS=()
+PROMPT_ARGS=()
+OUTPUT_JSON=false
+
+while [[ $# -gt 0 ]]; do
+    case $1 in
+        --output-json)
+            # Flag khusus untuk output JSON
+            OUTPUT_JSON=true
+            shift
+            ;;
+        -*)
+            # Ini adalah option untuk kilo
+            KILO_OPTIONS+=("$1")
+            shift
+            # Cek apakah option ini memerlukan value
+            if [[ $# -gt 0 && ! "$1" =~ ^- ]]; then
+                KILO_OPTIONS+=("$1")
+                shift
+            fi
+            ;;
+        *)
+            # Ini adalah bagian dari prompt
+            PROMPT_ARGS+=("$1")
+            shift
+            ;;
+    esac
+done
+
+# Gabungkan prompt
+PROMPT="${PROMPT_ARGS[*]}"
+
+# Check if continuation flag is used - prompt is optional for -c
+HAS_CONTINUE_FLAG=false
+for opt in "${KILO_OPTIONS[@]}"; do
+    if [[ "$opt" == "-c" || "$opt" == "--continue" ]]; then
+        HAS_CONTINUE_FLAG=true
+        break
+    fi
+done
+
+# Validate prompt (required unless using -c without new prompt)
+if [ -z "$PROMPT" ] && [ "$HAS_CONTINUE_FLAG" = false ]; then
+    echo "Usage: olik [kilo-options] <prompt>"
+    echo "Example: olik tampilkan daftar table schema u1566482_sparepart"
+    echo "Example: olik -c <prompt>  # Continue with new prompt"
+    echo "Example: olik -s <session-id> <prompt>  # Resume session"
+    exit 1
+fi
+
+# File temporary
+TEMP_OUTPUT="/tmp/olik_output_$$.json"
+TEMP_CLEAN="/tmp/olik_clean_$$.txt"
+
+# File temporary
+TEMP_OUTPUT="/tmp/olik_output_$$.json"
+TEMP_CLEAN="/tmp/olik_clean_$$.txt"
+
+# Default parameters (bisa di-override oleh user)
+DEFAULT_PARAMS=(
+    "-mo" "x-ai/grok-code-fast-1"  # Model
+    "--yolo"                        # Auto-approve tools
+    "-m" "ask"                      # Mode
+    "-a"                            # Autonomous
+    "-j"                            # JSON output
+)
+
+# Jalankan Kilocode: default params + user options + prompt
+# User options akan override default jika ada duplikat (kilo menggunakan nilai terakhir)
+echo "🔄 Menjalankan Kilocode..."
+START_TIME=$(date +%s.%N)
+kilo "${DEFAULT_PARAMS[@]}" "${KILO_OPTIONS[@]}" "$PROMPT" > "$TEMP_OUTPUT" 2>&1
+END_TIME=$(date +%s.%N)
+DURATION=$(echo "$END_TIME - $START_TIME" | bc)
+export OLIK_DURATION="$DURATION"
+
+# Ekstrak response bersih menggunakan Python
+export OLIK_INPUT="$TEMP_OUTPUT"
+export OLIK_OUTPUT="$TEMP_CLEAN"
+export OLIK_METADATA="/tmp/olik_metadata_$$.json"
+python3 << 'PYTHON_SCRIPT'
+import json
+import re
+import sys
+import os
+
+input_file = os.environ['OLIK_INPUT']
+output_file = os.environ['OLIK_OUTPUT']
+metadata_file = os.environ['OLIK_METADATA']
+
+# Baca file
+with open(input_file, 'r') as f:
+    content = f.read()
+
+# Hapus ANSI escape codes
+ansi_escape = re.compile(r'\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])')
+cleaned = ansi_escape.sub('', content)
+
+# Ekstrak JSON objects menggunakan regex (lebih robust dibanding per line split)
+# Mencari string yang diawali { dan diakhiri }
+json_blocks = []
+depth = 0
+start = -1
+for i, char in enumerate(cleaned):
+    if char == '{':
+        if depth == 0:
+            start = i
+        depth += 1
+    elif char == '}':
+        depth -= 1
+        if depth == 0 and start != -1:
+            json_blocks.append(cleaned[start:i+1])
+            start = -1
+
+# Ekstrak response final dan metadata
+final_text = None
+session_id = None
+message_id = None
+session_title = None
+
+for block in json_blocks:
+    try:
+        obj = json.loads(block)
+        
+        # Ekstrak session ID
+        if 'sessionId' in obj and not session_id:
+            session_id = obj['sessionId']
+        
+        # Ekstrak session title
+        if obj.get('event') == 'session_title_generated':
+            session_title = obj.get('title')
+        
+        # Ekstrak message ID
+        if 'id' in obj and obj.get('source') == 'cli' and not message_id:
+            message_id = obj['id']
+        
+        # Ekstrak response text final
+        # Mendukung say: text ATAU say: completion_result
+        if (obj.get('type') == 'say' and 
+            obj.get('say') in ['text', 'completion_result'] and 
+            obj.get('partial') == False and
+            'content' in obj):
+            final_text = obj['content']
+    except json.JSONDecodeError:
+        continue
+
+# Simpan hasil
+if final_text:
+    with open(output_file, 'w') as f:
+        f.write(final_text)
+    
+    # Simpan metadata
+    metadata = {
+        'session_id': session_id,
+        'message_id': message_id,
+        'session_title': session_title,
+        'duration': float(os.environ.get('OLIK_DURATION', 0))
+    }
+    with open(metadata_file, 'w') as f:
+        json.dump(metadata, f, indent=2)
+    
+    print("✅ Response berhasil diekstrak", file=sys.stderr)
+else:
+    print("❌ Tidak ditemukan response final", file=sys.stderr)
+    sys.exit(1)
+PYTHON_SCRIPT
+
+# Tampilkan hasil di terminal
+if [ -f "$TEMP_CLEAN" ]; then
+    if [ "$OUTPUT_JSON" = true ]; then
+        # Output sebagai JSON
+        if [ -f "$OLIK_METADATA" ]; then
+            python3 << 'PYTHON_JSON_OUTPUT'
+import json
+import os
+
+# Baca response dan metadata
+with open(os.environ['OLIK_OUTPUT'], 'r') as f:
+    response = f.read()
+
+with open(os.environ['OLIK_METADATA'], 'r') as f:
+    metadata = json.load(f)
+
+# Format output JSON
+output = {
+    "success": True,
+    "response": response,
+    "session": {
+        "id": metadata.get('session_id'),
+        "title": metadata.get('session_title')
+    },
+    "metadata": {
+        "duration_seconds": metadata.get('duration', 0)
+    }
+}
+
+print(json.dumps(output, indent=2, ensure_ascii=False))
+PYTHON_JSON_OUTPUT
+        else
+            # Fallback jika metadata tidak ada
+            echo '{"success": false, "error": "No metadata found"}'
+        fi
+    else
+        # Output sebagai text (default)
+        echo ""
+        echo "═══════════════════════════════════════════════════════════════════════════════"
+        cat "$TEMP_CLEAN"
+        echo "═══════════════════════════════════════════════════════════════════════════════"
+        
+        # Tampilkan metadata jika ada
+        if [ -f "$OLIK_METADATA" ]; then
+            SESSION_ID=$(python3 -c "import json; print(json.load(open('$OLIK_METADATA')).get('session_id', 'N/A'))")
+            SESSION_TITLE=$(python3 -c "import json; print(json.load(open('$OLIK_METADATA')).get('session_title', 'N/A'))")
+            
+            if [ "$SESSION_ID" != "None" ] && [ "$SESSION_ID" != "N/A" ]; then
+                echo ""
+                echo "📋 Session ID: $SESSION_ID"
+                if [ "$SESSION_TITLE" != "None" ] && [ "$SESSION_TITLE" != "N/A" ]; then
+                    echo "   Title: $SESSION_TITLE"
+                fi
+            fi
+            
+            # Tampilkan durasi
+            DURATION=$(python3 -c "import json; print(json.load(open('$OLIK_METADATA')).get('duration', 0))")
+            if [ "$DURATION" != "0" ]; then
+                printf "⏱️  Execution time: %.2f seconds\n" "$DURATION"
+            fi
+        fi
+        echo ""
+    fi
+    
+    # Cleanup
+    rm -f "$TEMP_OUTPUT" "$TEMP_CLEAN" "$OLIK_METADATA"
+else
+    if [ "$OUTPUT_JSON" = true ]; then
+        echo '{"success": false, "error": "Failed to extract response"}'
+    else
+        echo "❌ Gagal mengekstrak response"
+    fi
+    rm -f "$TEMP_OUTPUT" "$OLIK_METADATA"
+    exit 1
+fi

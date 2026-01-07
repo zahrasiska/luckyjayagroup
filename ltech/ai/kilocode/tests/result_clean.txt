@@ -1,0 +1,116 @@
+Berikut adalah daftar lengkap tabel dalam schema `u1566482_sparepart` berdasarkan file dump SQL yang diberikan. Saya ekstrak dari pernyataan `CREATE TABLE` dalam file tersebut. Setiap tabel memiliki struktur kolom, tipe data, dan komentar (jika ada) yang mendefinisikan fungsinya.
+
+### Daftar Tabel:
+1. **brg** - Master barang, menyimpan data identitas, harga, dan status stok barang.
+2. **brggaleri** - Galeri gambar untuk barang.
+3. **brggolongan** - Master golongan barang, termasuk referensi ke rekening akuntansi terkait.
+4. **brginfo** - Informasi tambahan barang, melengkapi data di tabel brg.
+5. **brgjenis** - Master jenis barang, menyimpan kategori tingkat jenis.
+6. **brgkategori** - Master kategori barang, menyimpan pengelompokan barang berdasarkan kategori.
+7. **brgkelompok** - Master kelompok barang, digunakan untuk pengelompokan level menengah di atas kategori.
+8. **brgkomponen** - Komponen barang.
+9. **brgmerk** - Master merk barang, menyimpan merek/brand dari barang.
+10. **brgperolehan** - Data perolehan barang.
+11. **brgpotongan** - Potongan barang.
+12. **brgsatuan** - Master konversi satuan barang, menyimpan informasi harga jual/beli untuk setiap satuan yang dimiliki suatu barang.
+13. **brgspek** - Spesifikasi barang.
+14. **d** - Detail transaksi (kemungkinan detail penjualan/pembelian).
+15. **d_draft** - Draft detail transaksi.
+16. **d_retur** - Data retur detail.
+17. **dataomset** - Data omset penjualan per sales.
+18. **dept** - Departemen (contoh data dummy).
+19. **devisi** - Master devisi.
+20. **diskon** - Master diskon.
+21. **diskond** - Detail diskon per barang.
+22. **doverhead** - Overhead detail.
+23. **dtkl** - Detail TKL (kemungkinan biaya tambahan).
+24. **emp** - Karyawan (contoh data dummy).
+25. **fifo** - Data FIFO untuk stok.
+26. **fifokeluar** - Data keluar FIFO.
+27. **fifom** - Data FIFO mutasi.
+28. **harga** - Master harga.
+29. **harta** - Master harta tetap.
+30. **harta_penyusutan** - Penyusutan harta tetap.
+31. **hartagol** - Golongan harta tetap.
+32. **inet** - Data internet/kontak online.
+33. **inet_tipe** - Tipe internet.
+34. **inetakseskas** - Akses kas untuk internet.
+35. **inetakseslokasi** - Akses lokasi untuk internet.
+36. **j** - Jurnal akuntansi.
+37. **kas** - Data kas/mutasi keuangan.
+38. **ktk** - Master kontak (pelanggan/supplier).
+39. **ktkalamat** - Alamat kontak.
+40. **ktkdevisi** - Relasi kontak dengan devisi.
+41. **ktkinfo** - Informasi tambahan kontak.
+42. **ktkkontak** - Detail kontak (telepon, email, dll.).
+43. **ktktipe** - Tipe kontak.
+44. **laporan** - Template laporan.
+45. **laporantemplate** - Template laporan detail.
+46. **lokasi** - Master lokasi/warehouse/gudang penyimpanan barang.
+47. **menutemplate** - Template menu.
+48. **operator_key** - Kunci operator.
+49. **operator_tipe** - Tipe operator.
+50. **peletakan** - Data peletakan barang.
+51. **permintaan** - Data permintaan barang.
+52. **permintaan_detail** - Detail permintaan.
+53. **permintaan_opname** - Permintaan opname stok.
+54. **pesan** - Data pesanan/purchase request.
+55. **pesand** - Detail pesanan.
+56. **pesandsts** - Status detail pesanan.
+57. **pesansts** - Status pesanan.
+58. **po_pb_relation** - Relasi Purchase Order (PO) dengan Pembelian (PB).
+59. **poind** - Indikator PO.
+60. **produk** - Data produk (kemungkinan sederhana).
+61. **rak** - Data rak penyimpanan.
+62. **rekeningakses** - Akses rekening.
+63. **rekeningakses_klas** - Klasifikasi akses rekening.
+64. **s** - Tabel stok barang per lokasi (saldo stok fisik).
+65. **satuan** - Master satuan.
+66. **spesifikasi** - Spesifikasi umum.
+67. **t** - Header transaksi utama.
+68. **t_bayar_poin** - Pembayaran poin.
+69. **t_draft** - Draft transaksi.
+70. **t_grn** - Goods Receipt Note (GRN): Bukti penerimaan barang di gudang.
+71. **t_grn_pb_relation** - Relasi GRN dengan PB.
+72. **t_grn_po_relation** - Relasi GRN dengan PO.
+73. **t_grnd** - Detail GRN.
+74. **t_po** - Purchase Order (PO).
+75. **t_po_pb_relation** - Relasi PO dengan PB.
+76. **t_pod** - Detail PO.
+77. **t_pr** - Purchase Request (PR).
+78. **t_pr_po_realation** - Relasi PR dengan PO.
+79. **t_prd** - Detail PR.
+80. **t_so** - Sales Order (SO).
+81. **t_so_d** - Detail SO.
+82. **t_so_pl** - Packing List SO.
+83. **t_so_pl_d** - Detail Packing List SO.
+84. **t_so_status** - Status SO.
+85. **t_temp** - Transaksi temporary.
+86. **temp_alamat** - Alamat temporary.
+87. **temp_barang** - Barang temporary.
+88. **temp_brgdevisi** - Relasi barang dengan devisi temporary.
+89. **temp_brgkomponen** - Komponen barang temporary.
+90. **temp_brgsatuan** - Satuan barang temporary.
+91. **temp_d** - Detail temporary.
+92. **temp_doverhead** - Overhead temporary.
+93. **temp_dtkl** - TKL temporary.
+94. **temp_kas** - Kas temporary.
+95. **temp_kendaraan** - Kendaraan temporary.
+96. **temp_keranjang_order** - Keranjang order temporary.
+97. **temp_kontak** - Kontak temporary.
+98. **temp_ktkkontak** - Kontak detail temporary.
+99. **temp_penyusutan** - Penyusutan temporary.
+100. **temp_pesan** - Pesan temporary.
+101. **temp_pesand** - Detail pesan temporary.
+102. **temp_poin** - Poin temporary.
+103. **temp_trans** - Transaksi temporary.
+104. **template_grid** - Template grid.
+105. **termin** - Master termin pembayaran.
+106. **tipepotongan** - Tipe potongan.
+107. **trsts** - Status transaksi.
+
+### Catatan:
+- Total ada **107 tabel** dalam schema ini.
+- Banyak tabel memiliki relasi foreign key ke tabel lain (misalnya, `brg` terkait dengan `brggolongan`, `brgjenis`, dll.).
+- Ada juga fungsi, trigger, dan indeks yang didefinisikan untuk mendukung operasi database.
+- Jika Anda memerlukan detail struktur kolom lengkap untuk tabel tertentu (misalnya, CREATE TABLE statement penuh), beri tahu saya nama tabelnya, dan saya akan ekstrak dari file dump.

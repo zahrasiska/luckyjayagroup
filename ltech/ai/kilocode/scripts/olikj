@@ -1,0 +1,100 @@
+#!/bin/bash
+# olikj - Olik dengan output JSON
+# Usage: olikj [kilo-options] <prompt>
+
+# Pisahkan options dan prompt
+KILO_OPTIONS=()
+PROMPT_ARGS=()
+
+while [[ $# -gt 0 ]]; do
+    case $1 in
+        -*)
+            KILO_OPTIONS+=("$1")
+            shift
+            if [[ $# -gt 0 && ! "$1" =~ ^- ]]; then
+                KILO_OPTIONS+=("$1")
+                shift
+            fi
+            ;;
+        *)
+            PROMPT_ARGS+=("$1")
+            shift
+            ;;
+    esac
+done
+
+PROMPT="${PROMPT_ARGS[*]}"
+
+if [ -z "$PROMPT" ]; then
+    echo "Usage: olikj [kilo-options] <prompt>"
+    echo "Example: olikj tampilkan daftar table schema u1566482_sparepart"
+    exit 1
+fi
+
+# File temporary
+TEMP_OUTPUT="/tmp/olikj_output_$$.json"
+
+# Default parameters
+DEFAULT_PARAMS=(
+    "-mo" "x-ai/grok-code-fast-1"
+    "--yolo"
+    "-m" "ask"
+    "-a"
+    "-j"
+)
+
+# Jalankan Kilocode
+kilo "${DEFAULT_PARAMS[@]}" "${KILO_OPTIONS[@]}" "$PROMPT" > "$TEMP_OUTPUT" 2>&1
+
+# Ekstrak dan format sebagai JSON
+export OLIKJ_INPUT="$TEMP_OUTPUT"
+python3 << 'PYTHON_SCRIPT'
+import json
+import re
+import sys
+import os
+
+input_file = os.environ['OLIKJ_INPUT']
+
+with open(input_file, 'r') as f:
+    content = f.read()
+
+# Hapus ANSI escape codes
+ansi_escape = re.compile(r'\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])')
+cleaned = ansi_escape.sub('', content)
+
+# Ekstrak data
+final_text = None
+session_id = None
+session_title = None
+
+for line in cleaned.split('\n'):
+    line = line.strip()
+    if line.startswith('{') and line.endswith('}'):
+        try:
+            obj = json.loads(line)
+            if 'sessionId' in obj and not session_id:
+                session_id = obj['sessionId']
+            if obj.get('event') == 'session_title_generated':
+                session_title = obj.get('title')
+            if (obj.get('type') == 'say' and obj.get('say') == 'text' and 
+                obj.get('partial') == False and 'content' in obj):
+                final_text = obj['content']
+        except json.JSONDecodeError:
+            continue
+
+# Output sebagai JSON
+result = {
+    "success": final_text is not None,
+    "response": final_text,
+    "session": {
+        "id": session_id,
+        "title": session_title
+    }
+}
+
+print(json.dumps(result, indent=2, ensure_ascii=False))
+PYTHON_SCRIPT
+
+# Cleanup
+rm -f "$TEMP_OUTPUT"
