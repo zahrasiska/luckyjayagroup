@@ -3,7 +3,7 @@
         "ltech-db": {
             "command": "node",
             "args": [
-                "/home/luckyjayagroup/ltech/ltech-backend/ai/copilot-orchestrator/mcp-pgsql-server.mjs"
+                "/home/luckyjayagroup/ltech/ai/copilot-orchestrator/mcp-pgsql-server.mjs"
             ],
             "env": {
                 "PGHOST": "localhost",
