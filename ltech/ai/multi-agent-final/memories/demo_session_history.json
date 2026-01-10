@@ -1,0 +1,16 @@
+[
+  {
+    "id": "msg1",
+    "role": "user",
+    "content": "Berapa neraca bulan ini?",
+    "timestamp": "2026-01-08T21:28:46.549Z"
+  },
+  {
+    "id": "msg2",
+    "role": "assistant",
+    "content": "Berikut laporan neraca...",
+    "agent": "finance-manager",
+    "tool": "neraca",
+    "timestamp": "2026-01-08T21:28:46.555Z"
+  }
+]

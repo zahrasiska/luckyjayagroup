@@ -1,0 +1,346 @@
+/**
+ * Multi-Agent Server
+ * Entry point for the AI multi-agent system
+ */
+
+import express from 'express';
+import { createServer } from 'http';
+import { Server as SocketIO } from 'socket.io';
+import cors from 'cors';
+import helmet from 'helmet';
+import dotenv from 'dotenv';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+dotenv.config();
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+import { healthCheck, closePool } from './config/database.js';
+import logger from './utils/logger.js';
+import { MemoryManager } from './core/memory-manager.js';
+
+dotenv.config();
+
+// Initialize Memory Manager
+const memoryManager = new MemoryManager();
+await memoryManager.init();
+
+const app = express();
+const httpServer = createServer(app);
+const io = new SocketIO(httpServer, {
+    cors: {
+        origin: process.env.CORS_ORIGIN || '*',
+        methods: ['GET', 'POST'],
+    },
+});
+
+const PORT = process.env.PORT || 8889;
+const log = logger.info;
+
+// Middleware
+app.use(helmet({ contentSecurityPolicy: false }));
+app.use(cors());
+app.use(express.json());
+
+app.use(express.static(path.join(__dirname, 'frontend/dist')));
+
+// Health check endpoint
+app.get('/api/health', async (req, res) => {
+    const dbHealthy = await healthCheck();
+
+    res.json({
+        status: dbHealthy ? 'healthy' : 'unhealthy',
+        timestamp: new Date().toISOString(),
+        version: '2.0.0',
+        service: 'ltech-multi-agent',
+        database: dbHealthy ? 'connected' : 'disconnected',
+    });
+});
+
+app.get('/ready', async (req, res) => {
+    const dbHealthy = await healthCheck();
+
+    if (!dbHealthy) {
+        return res.status(503).json({ ready: false, reason: 'Database not connected' });
+    }
+
+    res.json({ ready: true });
+});
+
+// Clear session cache endpoint
+import fs from 'fs/promises';
+app.post('/api/clear-cache', async (req, res) => {
+    const sessionId = req.body?.sessionId;
+    if (!sessionId) {
+        return res.status(400).json({ success: false, error: 'sessionId required' });
+    }
+    const filePath = path.join(__dirname, 'memories', `${sessionId}_knowledge.json`);
+    try {
+        await fs.unlink(filePath);
+        res.json({ success: true, message: `Cache cleared for sessionId: ${sessionId}` });
+    } catch (err) {
+        if (err.code === 'ENOENT') {
+            res.json({ success: true, message: 'No cache file found (already cleared)' });
+        } else {
+            res.status(500).json({ success: false, error: err.message });
+        }
+    }
+});
+
+// ==================== History Management (HTTP) ====================
+
+// Get conversation history
+app.get('/api/history/:sessionId', async (req, res) => {
+    try {
+        const { sessionId } = req.params;
+        const history = await memoryManager.getHistory(sessionId);
+        res.json({ success: true, history, count: history.length });
+    } catch (error) {
+        logger.error('Failed to get history', { error: error.message });
+        res.status(500).json({ success: false, error: error.message });
+    }
+});
+
+// Save message to history
+app.post('/api/history/:sessionId', async (req, res) => {
+    try {
+        const { sessionId } = req.params;
+        const message = req.body;
+
+        if (!message.role || !message.content) {
+            return res.status(400).json({
+                success: false,
+                error: 'Message must have role and content'
+            });
+        }
+
+        await memoryManager.saveMessage(sessionId, message);
+        res.json({ success: true, message: 'Message saved to history' });
+    } catch (error) {
+        logger.error('Failed to save message', { error: error.message });
+        res.status(500).json({ success: false, error: error.message });
+    }
+});
+
+// Clear conversation history
+app.delete('/api/history/:sessionId', async (req, res) => {
+    try {
+        const { sessionId } = req.params;
+        await memoryManager.clearHistory(sessionId);
+        res.json({ success: true, message: 'History cleared' });
+    } catch (error) {
+        logger.error('Failed to clear history', { error: error.message });
+        res.status(500).json({ success: false, error: error.message });
+    }
+});
+
+// Export history as JSON
+app.get('/api/history/:sessionId/export', async (req, res) => {
+    try {
+        const { sessionId } = req.params;
+        const history = await memoryManager.getHistory(sessionId);
+
+        res.setHeader('Content-Type', 'application/json');
+        res.setHeader('Content-Disposition', `attachment; filename="${sessionId}_history.json"`);
+        res.json({ sessionId, exportedAt: new Date().toISOString(), history });
+    } catch (error) {
+        logger.error('Failed to export history', { error: error.message });
+        res.status(500).json({ success: false, error: error.message });
+    }
+});
+
+// Basic info endpoint
+app.get('/', (req, res) => {
+    res.json({
+        name: 'LTECH Multi-Agent AI',
+        version: '2.0.0',
+        description: 'Production-grade Multi-Agent AI System for Lucky Tech Group ERP',
+        endpoints: {
+            health: '/health',
+            ready: '/ready',
+            websocket: '/',
+        },
+    });
+});
+
+// Serve frontend for any other routes
+app.get('*', (req, res) => {
+    res.sendFile(path.join(__dirname, 'frontend/dist/index.html'));
+});
+
+// WebSocket connection handling
+io.on('connection', async (socket) => {
+    const clientId = socket.id;
+    logger.ws.info('Client connected', { clientId });
+
+    // Authentication check
+    const token = socket.handshake.auth?.token;
+    const tenantSchema = socket.handshake.query?.tenantSchema;
+
+    if (!token || !tenantSchema) {
+        logger.ws.warn('Missing auth or tenant', { clientId });
+        socket.emit('error', { message: 'Authentication required' });
+        socket.disconnect();
+        return;
+    }
+
+    // Build initial context to generate session ID
+    const initialContext = {
+        tenant: {
+            schema: tenantSchema,
+            name: 'LTECH ERP',
+        },
+        user: {
+            id: token, // Use token as user ID for now (will be extracted properly later)
+            username: 'user', // TODO: Extract from token
+        },
+    };
+
+    // AI generates session ID (cold start)
+    const aiSessionId = memoryManager.getSessionId(initialContext);
+
+    // Store context in socket
+    socket.data.tenantSchema = tenantSchema;
+    socket.data.token = token;
+    socket.data.sessionId = aiSessionId;
+
+    // Send session ID to client
+    socket.emit('session-ready', {
+        sessionId: aiSessionId,
+        message: 'Session initialized by AI',
+    });
+
+    logger.ws.info('Session created by AI', { clientId, sessionId: aiSessionId });
+
+    // Handle chat messages
+    socket.on('chat-message', async (data) => {
+        const {
+            question,
+            sessionId: clientSessionId,
+            tenantSchema: messageTenantSchema,
+            userId = 'web-user',
+            userRole = 'user',
+        } = data;
+
+        // Use AI-generated session ID (from socket.data)
+        const sessionId = socket.data.sessionId || clientSessionId;
+
+        // Use tenantSchema from message (preferred) or fallback to socket handshake
+        const activeTenantSchema = messageTenantSchema || tenantSchema;
+
+        // Validate required fields (sama seperti legacy)
+        if (!question) {
+            return socket.emit('chat-error', { error: 'Question is required' });
+        }
+
+        if (!activeTenantSchema) {
+            return socket.emit('chat-error', {
+                error: 'tenantSchema is required but not provided. Please select a tenant schema.',
+            });
+        }
+
+        logger.ws.info('Chat message received', {
+            clientId,
+            sessionId,
+            question: question?.substring(0, 50),
+            tenant: activeTenantSchema,
+            userId,
+            userRole,
+        });
+
+        socket.emit('chat-progress', { step: 'routing', message: 'Routing query...' });
+
+        try {
+            // Import orchestrator dynamically
+            const { MultiAgentPipeline } = await import('./core/orchestrator.js');
+            const pipeline = new MultiAgentPipeline();
+            await pipeline.initialize();
+
+            // Build context (gunakan data dari message, sama seperti legacy)
+            const context = {
+                userId,
+                userRole,
+                tenantSchema: activeTenantSchema,
+                sessionId,
+                onProgress: (event) => {
+                    socket.emit('chat-progress', event);
+                },
+            };
+
+            // Process through pipeline
+            const result = await pipeline.processQuestion(question, context);
+
+            if (result.success) {
+                const responseData = {
+                    success: true,
+                    response: result.summary,
+                    agent: result.metadata?.agentUsed || 'unknown',
+                    duration: result.metadata?.duration || 0,
+                    timestamp: new Date().toISOString(),
+                    sessionId: result.sessionId,
+                };
+
+                socket.emit('chat-response', responseData);
+
+                // Save to memory
+                await memoryManager.saveMessage(sessionId, {
+                    id: `msg_${Date.now()}_user`,
+                    role: 'user',
+                    content: question,
+                });
+
+                await memoryManager.saveMessage(sessionId, {
+                    id: `msg_${Date.now()}_assistant`,
+                    role: 'assistant',
+                    content: result.summary,
+                    agent: result.metadata?.agentUsed,
+                });
+            } else {
+                throw new Error(result.error || 'Pipeline processing failed');
+            }
+
+        } catch (error) {
+            logger.ws.error('Chat processing error', {
+                clientId,
+                error: error.message,
+                stack: error.stack,
+                name: error.name
+            });
+            socket.emit('chat-error', {
+                success: false,
+                error: error.message,
+            });
+        }
+    });
+
+    socket.on('disconnect', (reason) => {
+        logger.ws.info('Client disconnected', { clientId, reason });
+    });
+});
+
+// Graceful shutdown
+async function shutdown(signal) {
+    logger.info(`${signal} received, shutting down gracefully`);
+
+    // Close WebSocket connections
+    io.close();
+
+    // Close database pool
+    await closePool();
+
+    // Exit
+    process.exit(0);
+}
+
+process.on('SIGTERM', () => shutdown('SIGTERM'));
+process.on('SIGINT', () => shutdown('SIGINT'));
+
+// Start server
+httpServer.listen(PORT, () => {
+    logger.info(`🚀 Multi-Agent Server running on port ${PORT}`);
+    logger.info(`   Health: http://localhost:${PORT}/api/health`);
+    logger.info(`   WebSocket: ws://localhost:${PORT}`);
+});
+
+export { app, io, httpServer };

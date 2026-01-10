@@ -1,0 +1,190 @@
+╔══════════════════════════════════════════════════════════════════╗
+║        ANTI-HALLUCINATION PROTOCOL - v1.3.4                      ║
+║                 January 8, 2025                                  ║
+╚══════════════════════════════════════════════════════════════════╝
+
+✅ DEPLOYED & ACTIVE
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+🔴 CRITICAL ISSUE FIXED:
+
+Problem: AI Hallucination - Fabricating Data
+  Query: "Tampilkan penjualan bulan lalu per merk"
+  Response: Mobiltech, Autopart, FilterMax, BrakePro ❌
+  Reality: None of these brands exist in database!
+  
+Actual brands in u1566482_leontech:
+  ✅ OLIKE, BASEUS, UGREEN, ORAIMO, REALME, OPPO, SAMSUNG, 
+     APPLE, VIVO, INFINIX
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+💡 ROOT CAUSE:
+
+Qwen was either:
+1. Not calling ltech-db tool at all
+2. Calling tool but ignoring results
+3. Using training data to generate "plausible" looking data
+4. Instructions weren't strong enough to prevent hallucination
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+🔧 SOLUTION IMPLEMENTED:
+
+Added STRICT Anti-Hallucination Protocol to:
+1. CORE_MEMORY.md (global for ALL agents)
+2. specialist-base.js (reinforced in specialist prompt)
+
+Key Improvements:
+✅ Explicit "ZERO KNOWLEDGE" declaration
+✅ Mandatory tool call requirement
+✅ Empty result = "Data tidak ditemukan" (no fabrication)
+✅ Verification checklist before response
+✅ Clear examples of forbidden behavior
+✅ Step-by-step mandatory workflow
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+📝 PROTOCOL RULES:
+
+🚨 MANDATORY RULES:
+1. ❌ YOU HAVE ZERO KNOWLEDGE about company data
+2. ❌ CANNOT use training data for names/numbers
+3. ✅ MUST call ltech-db tool before responding
+4. ✅ MUST use ONLY tool output data
+5. ✅ Empty result = "Data tidak ditemukan"
+6. ✅ Every fact MUST come from database
+
+🚫 FORBIDDEN BEHAVIORS:
+❌ "Mobiltech sold Rp 1,234,567" (brand not in DB)
+❌ "Top brands: Autopart, FilterMax" (brands not in DB)
+❌ Inventing data when database returns []
+❌ Using "example" or "sample" data
+
+✅ CORRECT WORKFLOW:
+Step 1: User asks question
+Step 2: Call ltech-db tool with SQL
+Step 3: Wait for tool response
+Step 4: If [] → "Data tidak ditemukan"
+Step 5: If data → use ONLY that data
+Step 6: Verify ALL facts from tool output
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+📊 BEFORE vs AFTER:
+
+BEFORE (Hallucinating):
+┌────────────────────────────────────────┐
+│ User: "Penjualan per merk bulan lalu"  │
+│ ↓                                      │
+│ AI: (maybe calls tool, maybe not)      │
+│ ↓                                      │
+│ AI generates plausible-looking data:   │
+│   - Mobiltech: Rp 1,234,567           │
+│   - Autopart: Rp 876,543              │
+│   - FilterMax: Rp 654,321             │
+│ ↓                                      │
+│ Result: ALL FAKE DATA ❌               │
+└────────────────────────────────────────┘
+
+AFTER (Strict Protocol):
+┌────────────────────────────────────────┐
+│ User: "Penjualan per merk bulan lalu"  │
+│ ↓                                      │
+│ AI: MUST call ltech-db tool            │
+│ ↓                                      │
+│ Tool returns: OLIKE, BASEUS, UGREEN    │
+│ ↓                                      │
+│ AI: Use ONLY these brands in response  │
+│ ↓                                      │
+│ Result: REAL DATA ONLY ✅              │
+└────────────────────────────────────────┘
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+🧪 TESTING:
+
+Test 1: Query with Real Data
+  Query: "Tampilkan 5 merk teratas"
+  Expected: OLIKE, BASEUS, UGREEN, ORAIMO, REALME (from DB)
+  NOT: Mobiltech, Autopart, FilterMax (fabricated)
+
+Test 2: Query with Empty Result
+  Query: "Penjualan merk XYZ123 bulan lalu"
+  Expected: "Data tidak ditemukan"
+  NOT: Fabricated numbers for XYZ123
+
+Test 3: Verify Tool Call
+  Monitor logs: Should see ltech-db tool calls
+  If no tool call = HALLUCINATING
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+✨ BENEFITS:
+
+• Zero Tolerance for Hallucination
+• Every fact traceable to database
+• Clear error messages when no data
+• Builds user trust in AI accuracy
+• Prevents business decisions based on fake data
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+📝 FILES MODIFIED:
+
+1. knowledge/CORE_MEMORY.md
+   - Added ANTI-HALLUCINATION PROTOCOL section
+   - Mandatory rules for ALL agents
+   - Verification checklist
+   - Forbidden behavior examples
+
+2. agents/specialist-base.js
+   - Reinforced anti-hallucination in prompt
+   - Added verification checklist
+   - Mandatory workflow steps
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+📊 DEPLOYMENT:
+
+Status:  ✅ Live on Production
+Service: ltech-multi-agent (PM2)
+Version: 1.3.4
+Restart: 11 times
+
+Commands:
+• pm2 status ltech-multi-agent
+• pm2 logs ltech-multi-agent --lines 50
+• pm2 restart ltech-multi-agent
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+🎯 HOW TO VERIFY:
+
+1. Buka https://chat.luckyjaya.tech/
+2. Pilih "Leontech Module"
+3. Hapus chat (new session)
+4. Tanya: "Tampilkan 5 merk teratas"
+5. Verify brand names are REAL (not Mobiltech/Autopart)
+6. Check: OLIKE, BASEUS, UGREEN, etc (actual brands)
+
+If you see fabricated brands = protocol not working, report immediately!
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+💡 KEY TAKEAWAY:
+
+Problem: AI invented brands "Mobiltech", "Autopart", "FilterMax"
+Solution: Strict protocol - MUST use database, CANNOT fabricate
+Result:  Only real data from database allowed
+
+No hallucination = Trustworthy AI!
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Deployed: January 8, 2025
+Version:  1.3.4
+Status:   ✅ Production Ready
+
+╚══════════════════════════════════════════════════════════════════╝

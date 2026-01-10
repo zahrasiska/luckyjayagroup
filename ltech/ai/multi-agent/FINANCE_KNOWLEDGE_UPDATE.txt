@@ -1,0 +1,201 @@
+╔══════════════════════════════════════════════════════════════════╗
+║      FINANCE MANAGER KNOWLEDGE BASE UPDATE - v1.3.5              ║
+║                   January 8, 2025                                ║
+╚══════════════════════════════════════════════════════════════════╝
+
+✅ UPDATED & DEPLOYED
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+🔴 ISSUE:
+
+Problem: Finance Manager tidak memahami pertanyaan sederhana
+  User: "Tampilkan saldo kas"
+  Response: Penjelasan struktur tabel, bukan data aktual ❌
+  
+Expected: Query ke database dan tampilkan saldo kas ✅
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+💡 ROOT CAUSE:
+
+Knowledge base finance-manager kurang lengkap:
+- ❌ Tidak ada contoh query konkret
+- ❌ Tidak ada template response
+- ❌ Agent harus "menebak" cara query kas
+- ❌ Tidak ada guidance untuk pertanyaan umum
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+🔧 SOLUTION:
+
+Added "Common Query Examples" section dengan 5 query paling umum:
+
+1. ✅ Saldo Kas (Cash Balance)
+   - Query kas tunai (subklas 110)
+   - Query kas bank (subklas 120)
+   - Format response lengkap
+
+2. ✅ Laba Rugi (Profit & Loss)
+   - Query pendapatan & biaya
+   - Kalkulasi laba bersih
+
+3. ✅ Neraca (Balance Sheet)
+   - Query aset, kewajiban, modal
+   - Posisi keuangan
+
+4. ✅ Cash Flow
+   - Kas masuk & keluar
+   - Net cash flow
+
+5. ✅ Piutang (Accounts Receivable)
+   - Daftar piutang outstanding
+   - Umur piutang
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+📝 EXAMPLE ADDED:
+
+Query 1: Saldo Kas
+```sql
+SELECT 
+    CASE 
+        WHEN sk.nosubklasifikasi = 110 THEN 'Kas Tunai'
+        WHEN sk.nosubklasifikasi = 120 THEN 'Kas Bank'
+    END as tipe,
+    r.nama as rekening,
+    SUM(j.debit - j.kredit) as saldo
+FROM j
+JOIN prive.rekening r ON j.idrekening = r.kode
+JOIN prive.subklas sk ON sk.nosubklasifikasi = r.nosubklasifikasi
+WHERE j.deleted_at IS NULL
+  AND sk.nosubklasifikasi IN (110, 120)
+GROUP BY sk.nosubklasifikasi, r.kode, r.nama
+ORDER BY sk.nosubklasifikasi, r.nama;
+```
+
+Response Template:
+```markdown
+## 💰 Saldo Kas
+
+**Per tanggal:** [Today's date]
+
+### Kas Tunai
+- Kas Kecil: Rp 5.000.000
+- **Total Kas Tunai: Rp 5.000.000**
+
+### Kas Bank
+- BCA 1234567: Rp 50.000.000
+- Mandiri 9876543: Rp 35.000.000
+- **Total Kas Bank: Rp 85.000.000**
+
+### **Total Saldo Kas: Rp 90.000.000** ✅
+```
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+📊 BEFORE vs AFTER:
+
+BEFORE:
+User: "Tampilkan saldo kas"
+  ↓
+Agent: "Untuk menampilkan saldo kas, perlu pengecekan
+        struktur tabel jurnal..." (Penjelasan panjang)
+  ↓
+Result: Tidak ada data ❌
+
+AFTER:
+User: "Tampilkan saldo kas"
+  ↓
+Agent: Langsung query dengan SQL yang benar
+  ↓
+Agent: Format response sesuai template
+  ↓
+Result: Data saldo kas aktual ✅
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+✨ BENEFITS:
+
+• Clear Guidance - Agent tahu cara query kas
+• Ready-to-use SQL - Tidak perlu menebak struktur
+• Consistent Format - Response selalu terstruktur
+• Faster Response - Langsung execute, tidak ragu
+• Better UX - User dapat data yang diminta
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+📝 FILE MODIFIED:
+
+knowledge/finance-manager/QWEN.md
+  - Added "Common Query Examples" section
+  - 5 query examples dengan SQL lengkap
+  - Response templates untuk setiap query
+  - Total: +170 lines of actionable examples
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+🧪 TESTING:
+
+Test 1: Saldo Kas
+  Query: "Tampilkan saldo kas"
+  Expected: Query SQL, tampilkan kas tunai + kas bank
+  
+Test 2: Laba Rugi
+  Query: "Laba rugi bulan ini"
+  Expected: Query pendapatan & biaya, hitung laba
+
+Test 3: Neraca  
+  Query: "Tampilkan neraca"
+  Expected: Query aset, kewajiban, modal
+
+Test 4: Cash Flow
+  Query: "Cash flow bulan ini"
+  Expected: Kas masuk, keluar, net cash flow
+
+Test 5: Piutang
+  Query: "Daftar piutang"
+  Expected: List piutang outstanding dengan umur
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+📊 DEPLOYMENT:
+
+Status:  ✅ Live on Production
+Service: ltech-multi-agent (PM2)
+Version: 1.3.5
+Restart: 12 times
+
+Commands:
+• pm2 restart ltech-multi-agent
+• pm2 logs ltech-multi-agent
+• pm2 status
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+🎯 HOW TO VERIFY:
+
+1. Buka https://chat.luckyjaya.tech/
+2. Pilih role "Finance Manager" atau "CEO"
+3. Pilih schema "u1566482_sparepart"
+4. Tanya: "Tampilkan saldo kas"
+5. Verify: Harus ada query + data saldo kas
+6. NOT: Penjelasan struktur tabel saja
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+💡 KEY IMPROVEMENT:
+
+Problem: Agent tidak tahu cara query saldo kas
+Solution: Berikan contoh konkret dengan SQL & template
+Result:  Agent langsung execute query yang benar!
+
+Knowledge Base = Agent's Brain - Feed it well! 🧠
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Deployed: January 8, 2025
+Version:  1.3.5
+Status:   ✅ Production Ready
+
+╚══════════════════════════════════════════════════════════════════╝

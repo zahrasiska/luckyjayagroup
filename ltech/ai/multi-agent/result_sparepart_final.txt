@@ -1,0 +1,17 @@
+Saya akan mencari 5 merk yang ada di database. Mari saya cek tabel yang menyimpan informasi merk.
+
+Saya melihat beberapa tabel di schema "prive", tetapi untuk informasi merk produk, saya perlu melihat tabel-tabel di schema utama. Berdasarkan dokumentasi yang saya miliki, informasi merk biasanya disimpan di tabel `brgmerk`. Mari saya cek struktur tabel tersebut.
+
+Tabel `brgmerk` tidak ditemukan di schema 'prive'. Mari saya coba mencari tabel-tabel yang mungkin berisi informasi merk di semua schema.
+
+Saya menemukan bahwa tabel `brgmerk` ada di schema `u1566482_leontech` dan `u1566482_sparepart`. Mari saya ambil 5 merk dari salah satu tabel tersebut. Saya akan menggunakan schema `u1566482_leontech` terlebih dahulu.
+
+Berikut adalah 5 merk yang ada di database:
+
+1. OLIKE
+2. BASEUS
+3. UGREEN
+4. ORAIMO
+5. REALME
+
+Data ini diambil dari tabel `brgmerk` di schema `u1566482_leontech`.

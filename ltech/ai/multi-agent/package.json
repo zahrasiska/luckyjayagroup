@@ -1,0 +1,35 @@
+{
+    "name": "ltech-multi-agent-pipeline",
+    "version": "1.0.0",
+    "description": "Multi-agent AI pipeline for ltech business intelligence",
+    "main": "pipeline-orchestrator.js",
+    "scripts": {
+        "start": "node server.js",
+        "test": "node test-pipeline.js",
+        "dev": "nodemon server.js"
+    },
+    "dependencies": {
+        "axios": "^1.13.2",
+        "cheerio": "^1.1.2",
+        "cors": "^2.8.5",
+        "dotenv": "^16.0.0",
+        "express": "^4.18.0",
+        "express-rate-limit": "^7.0.0",
+        "multer": "^2.0.2",
+        "pg": "^8.16.3",
+        "redis": "^4.6.0",
+        "socket.io": "^4.8.3",
+        "uuid": "^9.0.1"
+    },
+    "devDependencies": {
+        "nodemon": "^3.0.0"
+    },
+    "keywords": [
+        "ai",
+        "multi-agent",
+        "business-intelligence",
+        "qwen"
+    ],
+    "author": "ltech",
+    "license": "ISC"
+}
