@@ -7,9 +7,9 @@
             ],
             "env": {
                 "PGHOST": "localhost",
-                "PGDATABASE": "postgres",
-                "PGUSER": "postgres",
-                "PGPASSWORD": "",
+                "PGDATABASE": "luckyjayagroup",
+                "PGUSER": "knavinkids",
+                "PGPASSWORD": "Duaribu#25##",
                 "PGPORT": "5432",
                 "PGSCHEMA": "u1566482_sparepart"
             }
